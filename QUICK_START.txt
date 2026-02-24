@@ -1,0 +1,126 @@
+╔════════════════════════════════════════════════════════════════╗
+║           🤖 AI VOICE CHATBOT - QUICK START GUIDE              ║
+╚════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  FIRST TIME SETUP (Choose ONE option)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ OPTION 1: AUTOMATIC SETUP (Recommended for First Time)
+   1. Double-click: setup.bat
+   2. Wait for installation to complete
+   3. Follow on-screen instructions
+
+✅ OPTION 2: MANUAL SETUP
+   1. Open Command Prompt (cmd)
+   2. Navigate to chatbot folder: cd path/to/chatbot
+   3. Run: pip install -r requirements.txt
+   4. Wait for completion
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  CONFIGURE NEWS API (Optional - for News Feature)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Visit: https://newsapi.org/
+2. Click "Get API Key" (Free)
+3. Sign up with your email
+4. Copy your API key
+5. Launch GUI Launcher: double-click launch.bat
+6. Paste API key in Settings section
+7. Click "Save API Key"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  RUNNING THE CHATBOT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 EASIEST WAY: Double-click launch.bat
+   ↓
+   1. GUI window opens
+   2. Click "START CHATBOT" button
+   3. Listen for: "Hello sir"
+   4. Say: "Hey Assistant"
+   5. Listen for: "What can I do for you today?"
+   6. Give your command
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  EXAMPLE COMMANDS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🌐 OPEN WEBSITES:
+   "Open youtube"
+   "Open google"
+   "Open github"
+
+🖥️ LAUNCH APPS:
+   "Open notepad"
+   "Open calculator"
+   "Open file explorer"
+
+⚙️ SYSTEM CONTROL:
+   "Shutdown"
+   "Lock my computer"
+   "Restart"
+
+🕐 GET INFO:
+   "What time is it?"
+   "Weather in New York"
+   "Define algorithm"
+
+📰 NEWS:
+   "Tell me the news"
+   "Technology news"
+
+😂 FUN:
+   "Tell me a joke"
+
+🧮 CALCULATE:
+   "What is 5 plus 3?"
+   "Calculate 100 divided by 2"
+
+🔍 SEARCH:
+   "Search for Python tutorials"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  TROUBLESHOOTING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❓ "Python not found"
+   → Install from: https://www.python.org/
+   → CHECK: "Add Python to PATH" during installation
+
+❓ "Microphone not working"
+   → Check Windows Settings → Privacy → Microphone
+   → Make sure microphone is enabled
+   → Test in Sound Settings
+
+❓ "No voice output"
+   → Check speaker volume
+   → Check Windows volume is not muted
+   → Test audio in Sound Settings
+
+❓ "Dependencies not installed"
+   → Run: pip install -r requirements.txt
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  NEED HELP?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📖 Read the full README.md file for detailed information
+💬 In GUI, click "HELP" button for all available commands
+❓ Say "Help" to the chatbot for list of features
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  TIPS FOR BEST RESULTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✓ Speak CLEARLY and naturally
+✓ Reduce BACKGROUND NOISE
+✓ Wait for the chatbot to finish speaking
+✓ Use COMPLETE SENTENCES ("Open YouTube" not just "YouTube")
+✓ Restart if you encounter persistent issues
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Ready to start? Double-click: launch.bat
+
+Enjoy your AI Voice Chatbot! 🎉
