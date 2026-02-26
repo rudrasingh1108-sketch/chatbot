@@ -1,5 +1,11 @@
 import speech_recognition as sr
 import pyttsx3
+try:
+    from gtts import gTTS
+    import playsound
+    GTTS_AVAILABLE = True
+except ImportError:
+    GTTS_AVAILABLE = False
 import time
 import webbrowser
 import os
@@ -7,6 +13,9 @@ import subprocess
 from datetime import datetime
 import requests
 import json
+from voice_profiles import VoiceProfile
+from emotion_analyzer import EmotionAnalyzer
+from gml import GigzsMemoryLayer
 
 
 # Website mapping for easy access
@@ -45,17 +54,28 @@ APPLICATIONS = {
 NEWS_API_KEY = "017aa8b3ea10400eb7052708e71559e0"  
 
 
-def listen_for_audio(recognizer, source, timeout=None, phrase_time_limit=None):
+def listen_for_audio(recognizer, source, timeout=None, phrase_time_limit=None, engine="google"):
     try:
         audio = recognizer.listen(source, timeout=timeout, phrase_time_limit=phrase_time_limit)
     except Exception:
-        return None
+        return None, None
     try:
-        return recognizer.recognize_google(audio)
+        if engine == "google":
+            text = recognizer.recognize_google(audio)
+        # Placeholder for other engines (e.g., Vosk, Sphinx)
+        # elif engine == "vosk":
+        #     ...
+        # elif engine == "sphinx":
+        #     text = recognizer.recognize_sphinx(audio)
+        else:
+            text = recognizer.recognize_google(audio)
+        
+        # Return both text and audio for emotion analysis
+        return text, audio
     except sr.UnknownValueError:
-        return None
+        return None, audio
     except sr.RequestError:
-        return "__API_ERROR__"
+        return "__API_ERROR__", audio
 
 
 def check_and_open_website(user_input):
@@ -403,6 +423,46 @@ def handle_calculation(user_input):
     return None
 
 
+def handle_emotion_commands(user_input, emotion_analyzer, context):
+    """Handle emotion analysis and psychology-aware commands."""
+    user_input = user_input.lower()
+    
+    # Status queries
+    if "how am i feeling" in user_input or "what's my emotion" in user_input or "how do i sound" in user_input:
+        emotion = context.get("last_emotion", "neutral")
+        confidence = context.get("emotion_confidence", 0)
+        if emotion != "neutral":
+            tips = emotion_analyzer.get_emotion_tips(emotion)
+            return f"You sound {emotion} (confidence: {confidence:.0%}). Here are some tips: {tips[0] if tips else 'Take care of yourself!'}"
+        else:
+            return "I haven't analyzed your emotional state yet. Keep talking!"
+    
+    if "emotional summary" in user_input or "emotion history" in user_input or "how have i been" in user_input:
+        summary = emotion_analyzer.get_emotion_summary()
+        if summary.get("total_records"):
+            return f"You've had {summary['total_records']} voice interactions. Your most common emotion was {summary['most_common']}."
+        else:
+            return "No emotional data collected yet."
+    
+    if "stress relief" in user_input or "help with stress" in user_input or "i'm stressed" in user_input:
+        tips = emotion_analyzer.get_emotion_tips("stress")
+        return f"Here are stress relief suggestions: {tips[0]}. {tips[1] if len(tips) > 1 else ''}"
+    
+    if "calm me down" in user_input or "relax" in user_input or "help me relax" in user_input:
+        return "Try deep breathing: Breathe in for 4 counts, hold for 7, exhale for 8. Repeat 5 times. Would you like me to guide you through a breathing exercise?"
+    
+    if "boost confidence" in user_input or "build confidence" in user_input or "feel confident" in user_input:
+        return "You've already accomplished so much! Remember your past successes. Focus on one thing at a time. You've got this!"
+    
+    if "cheer me up" in user_input or "make me happy" in user_input or "i'm sad" in user_input:
+        return "I hear you. Why don't you tell me what's bothering you? Or I can tell you a joke to lighten the mood?"
+    
+    if "motivation" in user_input or "motivate me" in user_input or "inspire me" in user_input:
+        return "You have unlimited potential! Every challenge is an opportunity to grow. Start with one small step today!"
+    
+    return None
+
+
 def handle_search(user_input):
     """Handle web search requests."""
     user_input = user_input.lower()
@@ -420,119 +480,352 @@ def handle_help(user_input):
     if "help" in user_input or "what can you do" in user_input or "available commands" in user_input:
         return get_help()
     
+
     return None
-    engine = pyttsx3.init()
-    # Configure TTS for better output
-    engine.setProperty('rate', 150)  # slower speech
-    engine.setProperty('volume', 1.0)  # max volume
+
+
+def handle_voice_profile(user_input):
+    """Handle voice profile training and identification commands."""
+    user_input = user_input.lower()
     
+    # This will be used after initialization
+    return None
+
+
+def handle_user_recognition(recognizer, source, voice_profile_manager):
+    """Handle speaker identification"""
+    try:
+        username, confidence = voice_profile_manager.identify_speaker(recognizer, source)
+        if username:
+            return username, confidence
+    except Exception as e:
+        print(f"Error in user recognition: {e}")
+    return None, 0
+
+
+def main():
+    # Engine selection (could be loaded from config in future)
+    speech_engine = "google"  # or "vosk", "sphinx" if implemented
+    tts_engine = "pyttsx3"    # or "gtts" if implemented
+    
+    # Initialize voice profile manager for multi-user recognition
+    voice_profile_manager = VoiceProfile()
+    
+    # Initialize emotion analyzer for psychological mode
+    emotion_analyzer = EmotionAnalyzer()
+    
+    # Initialize Gigzs Memory Layer for long-term recall
+    gml = GigzsMemoryLayer()
+
+    def speak(text):
+        if tts_engine == "pyttsx3":
+            try:
+                engine = pyttsx3.init()
+                engine.setProperty('rate', 150)
+                engine.setProperty('volume', 1.0)
+                engine.say(text)
+                engine.runAndWait()
+            except Exception as e:
+                print(f"TTS error: {e}")
+        elif tts_engine == "gtts" and GTTS_AVAILABLE:
+            try:
+                tts = gTTS(text=text, lang='en')
+                tts.save("temp_gtts.mp3")
+                playsound.playsound("temp_gtts.mp3")
+                os.remove("temp_gtts.mp3")
+            except Exception as e:
+                print(f"gTTS error: {e}")
+        else:
+            print("No valid TTS engine available.")
+
     # speak initial greeting before listening for wake word
     greeting = "hello sir"
     print("Speaking:", greeting)
-    engine.say(greeting)
-    engine.runAndWait()
+    speak(greeting)
 
     r = sr.Recognizer()
-
     wake_words = ["hey assistant", "hey bot", "hello assistant", "hey sir", "assistant"]
 
-    # Loop that opens microphone to detect wake word, then closes it before speaking
+    # Persistent conversation context memory (retained across sessions)
+    context = {
+        "last_command": None,
+        "last_result": None,
+        "history": [],
+        "current_user": None,
+        "user_confidence": 0
+    }
+
+    # Exit phrases to end conversation
+    exit_phrases = ["exit", "bye", "goodbye", "see you", "stop listening", "that's all"]
+
+    # Main wake word detection loop
+    in_conversation = False
+
     while True:
-        with sr.Microphone() as source:
-            r.adjust_for_ambient_noise(source, duration=1)
-            print("Listening for wake word...")
-
-            heard = listen_for_audio(r, source, timeout=None, phrase_time_limit=5)
-            if heard is None:
-                continue
-            if heard == "__API_ERROR__":
-                print("Google API error occurred while listening for wake word")
-                continue
-
-            heard_text = heard.lower()
-            print("Heard:", heard_text)
-
-            if not any(w in heard_text for w in wake_words):
-                continue
-
-        # microphone `source` is now closed (we exited the with-block)
-        print("Wake word detected! Preparing to speak...")
-        
-        # Close previous engine and recreate it
-        del engine
-        time.sleep(1.0)
-        
-        engine = pyttsx3.init()
-        engine.setProperty('rate', 150)
-        engine.setProperty('volume', 1.0)
-        
-        prompt = "what can i do for you today"
-        print("Speaking:", prompt)
         try:
-            engine.say(prompt)
-            engine.runAndWait()
-            print("Finished speaking prompt")
-        except Exception as e:
-            print("TTS error:", e)
+            if not in_conversation:
+                # Listen for wake word
+                with sr.Microphone() as source:
+                    try:
+                        r.adjust_for_ambient_noise(source, duration=1)
+                        print("Listening for wake word...")
+                        heard_text, heard_audio = listen_for_audio(r, source, timeout=None, phrase_time_limit=5, engine=speech_engine)
+                    except Exception as mic_err:
+                        print(f"Microphone error: {mic_err}")
+                        continue
 
-        # Close engine and wait before opening microphone
-        del engine
-        time.sleep(1.5)
+                    if heard_text is None:
+                        continue
+                    if heard_text == "__API_ERROR__":
+                        print("Google API error occurred while listening for wake word")
+                        continue
 
-        # open microphone again to capture the user's request (avoids audio device conflicts)
-        with sr.Microphone() as source:
-            r.adjust_for_ambient_noise(source, duration=0.5)
-            print("Listening for your request...")
-            result = listen_for_audio(r, source, timeout=5, phrase_time_limit=8)
+                    heard_lower = heard_text.lower()
+                    print("Heard:", heard_lower)
 
-        if result is None:
-            reply = "Could not understand what you said"
-        elif result == "__API_ERROR__":
-            reply = "API error occurred"
-        else:
-            # Check for help command first
-            help_result = handle_help(result)
-            if help_result:
-                reply = help_result
-            # Check if user wants to open a website
-            elif check_and_open_website(result):
-                reply = check_and_open_website(result)
-            # Check if user wants to open an application
-            elif open_application(result):
-                reply = open_application(result)
-            # Check for information and queries (time, date, weather, definitions)
-            elif handle_information_request(result):
-                reply = handle_information_request(result)
-            elif handle_queries(result):
-                reply = handle_queries(result)
-            # Check for entertainment (jokes)
-            elif handle_entertainment(result):
-                reply = handle_entertainment(result)
-            # Check for calculations
-            elif handle_calculation(result):
-                reply = handle_calculation(result)
-            # Check for web search
-            elif handle_search(result):
-                reply = handle_search(result)
-            # Check for system control commands
+                    if not any(w in heard_lower for w in wake_words):
+                        continue
+
+                # Wake word detected, enter conversation mode
+                in_conversation = True
+                print("Wake word detected! Starting conversation mode...")
+                time.sleep(1.0)
+                
+                # Attempt to identify the speaker
+                try:
+                    with sr.Microphone() as source:
+                        username, confidence = voice_profile_manager.identify_speaker(r, source, threshold=0.70)
+                        if username:
+                            context["current_user"] = username
+                            context["user_confidence"] = confidence
+                            print(f"Speaker identified: {username} (confidence: {confidence:.2f})")
+                            greeting = voice_profile_manager.get_personalized_greeting(username)
+                        else:
+                            context["current_user"] = None
+                            greeting = "Welcome! I couldn't recognize you. What can I do for you?"
+                except Exception as e:
+                    print(f"Speaker identification failed: {e}")
+                    context["current_user"] = None
+                    greeting = "hello, how can I help you today?"
+                
+                print("Speaking:", greeting)
+                speak(greeting)
+                time.sleep(1.5)
+
+            # Conversation mode: listen for user commands
+            audio_data = None
+            with sr.Microphone() as source:
+                try:
+                    r.adjust_for_ambient_noise(source, duration=0.5)
+                    print("Listening for your request...")
+                    result, audio_data = listen_for_audio(r, source, timeout=5, phrase_time_limit=8, engine=speech_engine)
+                except Exception as mic_err:
+                    print(f"Microphone error: {mic_err}")
+                    result = None
+                    continue
+
+            if result is None:
+                reply = "Could not understand what you said"
+            elif result == "__API_ERROR__":
+                reply = "API error occurred"
             else:
-                system_reply, command_type = handle_system_commands(result)
-                if system_reply:
-                    reply = system_reply
-                    # Execute the system command
-                    if command_type:
-                        execute_system_command(command_type)
-                else:
-                    reply = result
+                # Analyze emotion from user speech if audio data available
+                if audio_data is not None:
+                    try:
+                        import numpy as np
+                        audio_data_array = np.frombuffer(audio_data.get_raw_data(), np.int16)
+                        emotion_result = emotion_analyzer.analyze_emotion(audio_data_array)
+                        print(f"Emotion Detected: {emotion_result['description']} (confidence: {emotion_result['confidence']:.2f})")
+                        context["last_emotion"] = emotion_result["emotional_state"]
+                        context["emotion_confidence"] = emotion_result["confidence"]
+                    except Exception as e:
+                        print(f"Emotion analysis error: {e}")
+                
+                # Check for exit phrases to end conversation mode
+                user_input = result.lower()
+                if any(phrase in user_input for phrase in exit_phrases):
+                    reply = "Goodbye! Going back to sleep mode."
+                    in_conversation = False
+                    context["current_user"] = None
+                    speak(reply)
+                    continue
 
-        print("User said:", reply)
-        
-        # Recreate engine for final response
-        engine = pyttsx3.init()
-        engine.setProperty('rate', 150)
-        engine.setProperty('volume', 1.0)
-        engine.say(reply)
-        engine.runAndWait()
+                # Check for voice profile commands
+                if "train voice" in user_input or "train profile" in user_input:
+                    username = user_input.replace("train voice", "").replace("train profile", "").strip()
+                    if not username:
+                        username = input("Enter username for new profile: ")
+                    reply = voice_profile_manager.create_profile(username, num_samples=3)
+                    speak(reply)
+                    continue
+                
+                if "list users" in user_input or "show users" in user_input:
+                    reply = voice_profile_manager.list_users()
+                    speak(reply)
+                    continue
+                
+                if "delete profile" in user_input:
+                    username = user_input.replace("delete profile", "").strip()
+                    if not username:
+                        username = input("Enter username to delete: ")
+                    reply = voice_profile_manager.delete_profile(username)
+                    speak(reply)
+                    continue
+                
+                # Handle GML Memory commands
+                if "remember" in user_input or "add to memory" in user_input:
+                    # Extract what to remember
+                    if "that" in user_input:
+                        memory_text = user_input.replace("remember that", "").replace("remember", "").replace("add to memory", "").strip()
+                    else:
+                        memory_text = user_input.replace("remember", "").replace("add to memory", "").strip()
+                    
+                    if memory_text and context["current_user"]:
+                        # Log as event with current user
+                        user_entity_id = gml.find_entity(context["current_user"], "person")
+                        if not user_entity_id:
+                            user_entity_id = gml.add_entity(context["current_user"], "person")
+                        
+                        gml.log_event(f"User told me: {memory_text}", [user_entity_id], "important_note")
+                        gml.save_memory()
+                        reply = f"Got it! I'll remember that: {memory_text}"
+                    else:
+                        reply = "Please tell me what you'd like me to remember."
+                    speak(reply)
+                    continue
+                
+                if "recall" in user_input or "remind me" in user_input or "what do you remember" in user_input:
+                    # Extract recall query
+                    memory_query = user_input.replace("recall", "").replace("remind me about", "").replace("what do you remember about", "").strip()
+                    
+                    if not memory_query:
+                        memory_query = context["current_user"] if context["current_user"] else "general"
+                    
+                    recall_result = gml.recall(memory_query)
+                    
+                    # Format response
+                    if recall_result['entities']:
+                        entity = recall_result['entities'][0]
+                        reply = f"I remember {entity['name']}. You told me they are a {entity.get('attributes', {}).get('description', 'person')}."
+                    elif recall_result['events']:
+                        event = recall_result['events'][0]
+                        reply = f"I remember: {event['description']}"
+                    else:
+                        reply = f"I don't have specific memories about {memory_query}, but I'm learning."
+                    
+                    speak(reply)
+                    continue
+                
+                if "memory status" in user_input or "how much do you remember" in user_input:
+                    stats = gml.get_memory_stats()
+                    reply = f"My memory currently has {stats['total_entities']} entities, {stats['total_relationships']} relationships, and {stats['total_events']} events."
+                    speak(reply)
+                    continue
+
+                # Contextual conversation logic
+                context["history"].append(user_input)
+                reply = None
+
+                try:
+                    # Multi-step context-aware logic
+                    if context["last_command"] == "open_youtube" and ("search" in user_input or "find" in user_input):
+                        # e.g., "search for AI tutorials"
+                        search_query = user_input.replace("search for","").replace("find","").strip()
+                        if search_query:
+                            webbrowser.open(f"https://www.youtube.com/results?search_query={search_query.replace(' ','+')}")
+                            reply = f"Searching YouTube for {search_query}"
+                            context["last_command"] = "youtube_search"
+                            context["last_result"] = search_query
+                    elif context["last_command"] == "youtube_search" and "play" in user_input and "first" in user_input:
+                        # e.g., "play the first one"
+                        reply = "Playing the first YouTube result (please click it in your browser)."
+                        context["last_command"] = None
+                        context["last_result"] = None
+                    else:
+                        # Check for emotion-aware commands first
+                        reply = handle_emotion_commands(user_input, emotion_analyzer, context)
+                        
+                        if not reply:
+                            # Standard command handlers
+                            command_handlers = [
+                                handle_help,
+                                check_and_open_website,
+                                open_application,
+                                handle_information_request,
+                                handle_queries,
+                                handle_entertainment,
+                                handle_calculation,
+                                handle_search
+                            ]
+                            for handler in command_handlers:
+                                handler_result = handler(user_input)
+                                if handler_result:
+                                    reply = handler_result
+                                # Track context for YouTube
+                                if handler == check_and_open_website and "youtube" in user_input:
+                                    context["last_command"] = "open_youtube"
+                                    context["last_result"] = "youtube"
+                                else:
+                                    context["last_command"] = None
+                                    context["last_result"] = None
+                                break
+                        if reply is None:
+                            system_reply, command_type = handle_system_commands(user_input)
+                            if system_reply:
+                                reply = system_reply
+                                if command_type:
+                                    execute_system_command(command_type)
+                                context["last_command"] = None
+                                context["last_result"] = None
+                            else:
+                                reply = user_input
+                                context["last_command"] = None
+                                context["last_result"] = None
+                    
+                    # Log interaction to GML memory (auto-memory feature)
+                    if context["current_user"] and reply:
+                        try:
+                            user_entity_id = gml.find_entity(context["current_user"], "person")
+                            if not user_entity_id:
+                                user_entity_id = gml.add_entity(context["current_user"], "person")
+                            
+                            gml.log_event(
+                                f"User: '{user_input}' | Bot: '{reply[:100]}'",
+                                [user_entity_id],
+                                "conversation"
+                            )
+                            
+                            # Save memory every 5 interactions
+                            if len(context["history"]) % 5 == 0:
+                                gml.save_memory()
+                        except Exception as gml_err:
+                            print(f"GML logging error: {gml_err}")
+                
+                except Exception as cmd_err:
+                    reply = f"Sorry, an error occurred while processing your request: {cmd_err}"
+                
+                # Enhance response based on emotional state
+                emotion = context.get("last_emotion")
+                if emotion == "stress":
+                    reply = f"{reply} By the way, I notice you sound a bit stressed. Want me to play some calming music or suggest a breathing exercise?"
+                elif emotion == "nervousness":
+                    reply = f"{reply} Don't worry, you sound a little nervous, but you're doing great! I'm here to help."
+                elif emotion == "excitement":
+                    reply = f"{reply} Wow, you sound excited! That's awesome energy! Let's make it happen!"
+                elif emotion == "sadness":
+                    reply = f"{reply} I sense you might be feeling a bit down. Want me to play some uplifting music or tell you something funny?"
+                
+                # Store emotion in context for potential commands
+                context["last_result"] = reply
+
+            print("User said:", reply)
+            speak(reply)
+        except KeyboardInterrupt:
+            print("Exiting chatbot. Goodbye!")
+            break
+        except Exception as loop_err:
+            print(f"Unexpected error in main loop: {loop_err}")
+            time.sleep(2)
 
 
 if __name__ == "__main__":

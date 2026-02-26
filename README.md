@@ -49,7 +49,25 @@ A smart voice assistant that understands and responds to voice commands with mul
 3. Say *"Hey Assistant"* to activate
 4. Give voice commands
 
-### Option 2: Command Line Setup
+### Option 2: Using Web Application (NEW! 🌐)
+
+1. **Install Web Dependencies**:
+   ```bash
+   pip install flask flask-cors
+   ```
+
+2. **Start Web Server**:
+   ```bash
+   python app.py
+   ```
+
+3. **Access in Browser**:
+   - Go to: `http://localhost:5000`
+   - Create user profiles
+   - Chat via text interface
+   - Use quick action buttons
+
+### Option 3: Command Line Setup
 
 1. **Install Dependencies** (First time only):
    ```bash
@@ -70,7 +88,48 @@ A smart voice assistant that understands and responds to voice commands with mul
 
 ---
 
-## 📋 System Requirements
+## 🌐 Web Application (NEW!)
+
+### Features
+- **Modern Chat Interface** - Clean, responsive web design
+- **User Profile Management** - Create and manage multiple user profiles
+- **Voice Profile Switching** - Quick user selection and personalized greetings
+- **Quick Actions** - Fast access to Weather, News, Jokes, Definitions, Time
+- **Chat History** - View and clear previous conversations
+- **Real-time Responses** - Instant replies to user queries
+
+### Quick Start
+```bash
+# Install dependencies
+pip install flask flask-cors
+
+# Start the web server
+python app.py
+
+# Open browser
+# http://localhost:5000
+```
+
+### Web App Usage
+1. **Create Profile**: Click "New Profile" → Enter username
+2. **Select User**: Choose from dropdown → Click "Set User"
+3. **Chat**: Type message → Press Enter or click Send
+4. **Quick Actions**: Click Weather, Joke, News, Definition, or Time buttons
+5. **Clear History**: Click "Clear History" to reset chat
+
+### API Endpoints
+- `POST /api/chat` - Send message
+- `GET /api/voice-profiles` - List profiles
+- `POST /api/voice-profiles/create` - Create profile
+- `DELETE /api/voice-profiles/<username>` - Delete profile
+- `GET /api/weather?city=City` - Get weather
+- `GET /api/define?word=Word` - Get definition
+- `GET /api/joke` - Get joke
+- `GET /api/news?category=general` - Get news
+
+For detailed web app documentation, see [WEB_APP_GUIDE.md](WEB_APP_GUIDE.md)
+
+---
 
 - **Python** 3.7 or higher
 - **Windows** OS (currently Windows-optimized)
@@ -185,12 +244,20 @@ A smart voice assistant that understands and responds to voice commands with mul
 
 ```
 chatbot/
-├── main.py              # Main chatbot script
-├── gui_launcher.py      # GUI launcher interface
-├── launch.bat           # Quick launch batch file
-├── requirements.txt     # Python dependencies
-├── README.md           # This file
-└── config.txt          # API keys (auto-generated)
+├── main.py                     # Main chatbot script (voice)
+├── app.py                      # Flask web application backend
+├── gui_launcher.py             # GUI launcher interface
+├── voice_profiles.py           # Voice recognition system
+├── launch.bat                  # Quick launch batch file
+├── requirements.txt            # Python dependencies
+├── README.md                   # This file
+├── WEB_APP_GUIDE.md           # Web app documentation
+├── templates/
+│   └── index.html             # Web interface
+├── static/
+│   ├── styles.css             # Web UI styling
+│   ├── script.js              # Frontend logic
+└── voice_profiles.json        # Stored user profiles
 ```
 
 ---
