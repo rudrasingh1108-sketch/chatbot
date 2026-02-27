@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JARVIS - Smart Home</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+</head>
+<body class="iot-body">
+  <div class="iot-shell">
+    <header class="iot-topbar">
+      <div class="iot-brand">
+        <div class="iot-orb"></div>
+        <div>
+          <h1>JARVIS</h1>
+          <p class="iot-subtitle">Smart Home Control</p>
+        </div>
+      </div>
+      <nav class="iot-nav">
+        <a class="iot-link" href="/">Home</a>
+        <a class="iot-link" href="/chat">Chat</a>
+      </nav>
+    </header>
+
+    <main class="iot-grid">
+      <section class="iot-panel">
+        <div class="panel-header">
+          <h2>Command Center</h2>
+          <span class="badge" id="iot-status">Connected</span>
+        </div>
+
+        <div class="command-row">
+          <input id="iot-command" class="command-input" type="text" placeholder="Try: turn on living room light" autocomplete="off" />
+          <button id="iot-send" class="btn-primary">Send</button>
+          <button id="iot-mic" class="btn-secondary" title="Voice command (browser)">🎤</button>
+        </div>
+
+        <div class="command-help">
+          <div class="chip">turn on living room light</div>
+          <div class="chip">turn off fan</div>
+          <div class="chip">set temperature to 22</div>
+          <div class="chip">lock the door</div>
+          <div class="chip">iot status</div>
+        </div>
+
+        <div class="assistant-log" id="iot-log"></div>
+      </section>
+
+      <section class="iot-panel">
+        <div class="panel-header">
+          <h2>Devices</h2>
+          <button id="iot-refresh" class="btn-secondary">Refresh</button>
+        </div>
+        <div class="device-grid" id="device-grid"></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="{{ url_for('static', filename='iot.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+{
+  "testuser": {
+    "username": "testuser",
+    "created": "2026-02-26T19:07:32.281880",
+    "voice_samples": [],
+    "average_features": {}
+  },
+  "rudr@": {
+    "username": "rudr@",
+    "created": "2026-02-26T19:14:00.488153",
+    "voice_samples": [],
+    "average_features": {}
+  },
+  "rudra": {
+    "username": "rudra",
+    "created": "2026-02-26T19:36:00.799794",
+    "voice_samples": [],
+    "average_features": {}
+  },
+  "dhfsdf": {
+    "username": "dhfsdf",
+    "created": "2026-02-26T19:38:12.316459",
+    "voice_samples": [],
+    "average_features": {}
+  }
+}

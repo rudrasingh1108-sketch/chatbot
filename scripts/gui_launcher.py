@@ -220,7 +220,7 @@ class ChatbotLauncher:
             messagebox.showwarning("Warning", "Chatbot is already running!")
             return
         
-        script_path = Path(__file__).parent / "main.py"
+        script_path = Path(__file__).parent.parent / "backend" / "main.py"
         
         if not script_path.exists():
             messagebox.showerror("Error", f"main.py not found at {script_path}")
@@ -246,10 +246,10 @@ class ChatbotLauncher:
     def _run_chatbot(self):
         """Run chatbot in background thread."""
         try:
-            script_path = Path(__file__).parent / "main.py"
+            script_path = Path(__file__).parent.parent / "backend" / "main.py"
             self.chatbot_process = subprocess.Popen(
                 ["python", str(script_path)],
-                cwd=Path(__file__).parent
+                cwd=Path(__file__).parent.parent
             )
             self.chatbot_process.wait()
             self.chatbot_process = None
@@ -379,7 +379,7 @@ CHATBOT COMMANDS - SAY THESE TO ACTIVATE FEATURES:
                 f.write(api_key)
             
             # Update main.py with the API key
-            main_file = Path(__file__).parent / "main.py"
+            main_file = Path(__file__).parent.parent / "backend" / "main.py"
             if main_file.exists():
                 with open(main_file, 'r') as f:
                     content = f.read()

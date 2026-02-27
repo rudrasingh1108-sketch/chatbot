@@ -1,7 +1,11 @@
 #!/usr/bin/env python
 """GML Implementation Test"""
 
-from gml import GigzsMemoryLayer
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+
+from core.gml import GigzsMemoryLayer
 
 print("=" * 50)
 print("GML IMPLEMENTATION TEST")

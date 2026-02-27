@@ -13,9 +13,15 @@ import subprocess
 from datetime import datetime
 import requests
 import json
-from voice_profiles import VoiceProfile
-from emotion_analyzer import EmotionAnalyzer
-from gml import GigzsMemoryLayer
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+
+import re
+
+from core.voice_profiles import VoiceProfile
+from core.emotion_analyzer import EmotionAnalyzer
+from core.gml import GigzsMemoryLayer
 
 
 # Website mapping for easy access
@@ -50,8 +56,41 @@ APPLICATIONS = {
     "firefox": "firefox.exe",
 }
 
-# News API configuration (Get free key from https://newsapi.org/)
-NEWS_API_KEY = "017aa8b3ea10400eb7052708e71559e0"  
+# News API configuration
+import os
+NEWS_API_KEY = os.getenv("NEWS_API_KEY", "017aa8b3ea10400eb7052708e71559e0")
+
+
+def groq_chat(prompt: str) -> str:
+    """Fallback to OpenRouter for general chat if GROQ key is missing but OpenRouter is available"""
+    api_key = os.getenv("OPENROUTER_API_KEY", "").strip()
+    if not api_key:
+        return ""
+
+    try:
+        url = "https://openrouter.ai/api/v1/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        }
+        payload = {
+            "model": "google/gemini-2.0-flash-exp",
+            "temperature": 0.2,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": "You are a helpful assistant. Give short, accurate answers. If the user asks 'what is X', prefer the most common meaning (e.g., Python = programming language) unless context suggests otherwise.",
+                },
+                {"role": "user", "content": prompt},
+            ],
+        }
+        resp = requests.post(url, headers=headers, json=payload, timeout=12)
+        if resp.status_code != 200:
+            return ""
+        data = resp.json()
+        return (data.get("choices") or [{}])[0].get("message", {}).get("content", "").strip()
+    except Exception:
+        return ""
 
 
 def listen_for_audio(recognizer, source, timeout=None, phrase_time_limit=None, engine="google"):
@@ -259,11 +298,18 @@ def handle_queries(user_input):
                 word = words[idx + 2]
                 return get_word_definition(word)
         elif "what is" in user_input:
-            # Extract word after "what is"
+            # Prefer LLM for better disambiguation; fall back to dictionary.
+            llm_answer = groq_chat(user_input)
+            if llm_answer:
+                return llm_answer
+
             parts = user_input.split("what is")
             if len(parts) > 1:
-                word = parts[1].strip().split()[0]
-                return get_word_definition(word)
+                candidate = parts[1].strip()
+                candidate = re.sub(r"[^a-zA-Z0-9_\- ]+", "", candidate).strip()
+                if candidate:
+                    word = candidate.split()[0]
+                    return get_word_definition(word)
     
     # News queries
     if "news" in user_input or "headlines" in user_input:
@@ -778,7 +824,12 @@ def main():
                                 context["last_command"] = None
                                 context["last_result"] = None
                             else:
-                                reply = user_input
+                                # Use OpenRouter for smarter answers if no command matches
+                                llm_reply = groq_chat(user_input)
+                                if llm_reply:
+                                    reply = llm_reply
+                                else:
+                                    reply = user_input # Fallback to echoing if LLM fails
                                 context["last_command"] = None
                                 context["last_result"] = None
                     

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Assistant - Welcome</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body class="auth-body">
+    <div class="auth-shell">
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="brand">
+                    <div class="brand-mark">VA</div>
+                    <div class="brand-text">
+                        <h1>Voice Assistant</h1>
+                        <p>Sign in to continue</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="auth-tabs">
+                <button class="tab-btn active" data-tab="login">Login</button>
+                <button class="tab-btn" data-tab="register">Register</button>
+            </div>
+
+            <div class="auth-panels">
+                <div class="auth-panel" id="panel-login">
+                    <label class="field-label" for="login-username">Username</label>
+                    <input class="field-input" id="login-username" type="text" placeholder="e.g. Aaruni" autocomplete="username" />
+                    <button class="btn-primary" id="login-btn">Continue</button>
+                    <p class="helper-text">This app stores users locally (voice profiles). No password yet.</p>
+                </div>
+
+                <div class="auth-panel hidden" id="panel-register">
+                    <label class="field-label" for="register-username">Username</label>
+                    <input class="field-input" id="register-username" type="text" placeholder="Choose a username" autocomplete="username" />
+                    <button class="btn-primary" id="register-btn">Create account</button>
+                    <p class="helper-text">Creates a new local voice profile for personalization.</p>
+                </div>
+            </div>
+
+            <div class="auth-footer">
+                <div class="status-pill" id="auth-status">Ready</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='landing.js') }}"></script>
+</body>
+</html>
