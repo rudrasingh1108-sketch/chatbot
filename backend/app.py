@@ -45,7 +45,9 @@ from main import check_and_open_website, execute_system_command
 from brain import JarvisBrain
 from whatsapp_sim import WhatsAppSimulator
 
-app = Flask(__name__, template_folder='../frontend/templates', static_folder='../frontend/static')
+app = Flask(__name__, 
+            template_folder=os.path.abspath(os.path.join(os.path.dirname(__file__), '../frontend/templates')), 
+            static_folder=os.path.abspath(os.path.join(os.path.dirname(__file__), '../frontend/static')))
 CORS(app)
 
 # Initialize Brain
@@ -77,7 +79,12 @@ voice_profile_manager = VoiceProfile()
 emotion_analyzer = EmotionAnalyzer()
 gml = GigzsMemoryLayer()  # Initialize Gigzs Memory Layer
 wake_detector = WakeWordDetector()
-wake_detector.start()
+_DISABLE_WAKE_WORD = os.getenv('DISABLE_WAKE_WORD', '').strip().lower() in {'1', 'true', 'yes', 'on'}
+if not _DISABLE_WAKE_WORD:
+    try:
+        wake_detector.start()
+    except Exception as e:
+        print(f"Wake word detector disabled due to init error: {e}")
 
 # Chat history storage
 chat_history = []
@@ -142,62 +149,129 @@ def favicon():
 @app.route('/api/stt/transcribe', methods=['POST'])
 def stt_transcribe():
     """Transcribe audio using local STT (Whisper if available, else Vosk). Expects multipart form-data field 'audio'."""
-    if not ((FASTER_WHISPER_AVAILABLE and whisper_model) or (VOSK_AVAILABLE and vosk_model)):
-        return jsonify({"error": "No local STT model available"}), 500
-
-    if 'audio' not in request.files:
-        return jsonify({"error": "audio file required"}), 400
-
-    f = request.files['audio']
-    if not f:
-        return jsonify({"error": "invalid audio file"}), 400
-
     try:
+        if not ((FASTER_WHISPER_AVAILABLE and whisper_model) or (VOSK_AVAILABLE and vosk_model)):
+            return jsonify({"error": "No local STT model available"}), 500
+
+        if 'audio' not in request.files:
+            return jsonify({"error": "audio file required"}), 400
+
+        f = request.files['audio']
+        if not f:
+            return jsonify({"error": "invalid audio file"}), 400
+
         raw_bytes = f.read()
 
         # 1) Try decoding with soundfile first (fast path)
         audio_data = None
         samplerate = None
         try:
+            # First, check if the file is empty
+            if len(raw_bytes) == 0:
+                return jsonify({"error": "Empty audio data received"}), 400
+                
             audio_data, samplerate = sf.read(io.BytesIO(raw_bytes))
-        except Exception:
+        except Exception as e:
+            print(f"Soundfile decode error: {e}")
             audio_data = None
             samplerate = None
 
         # 2) Fallback: use SpeechRecognition's AudioFile decoder (more tolerant on some systems)
-        # This requires system codecs for the given container; it often succeeds where libsndfile fails.
         if audio_data is None or samplerate is None:
             try:
-                r = sr.Recognizer()
-                with sr.AudioFile(io.BytesIO(raw_bytes)) as source:
-                    audio = r.record(source)
-                pcm = audio.get_raw_data(convert_rate=16000, convert_width=2)
-                samplerate = 16000
-                audio_int16 = np.frombuffer(pcm, dtype=np.int16)
+                import io
+                import wave
+                # Attempt to wrap in a basic WAV container if it's raw PCM
+                try:
+                    r = sr.Recognizer()
+                    with sr.AudioFile(io.BytesIO(raw_bytes)) as source:
+                        audio = r.record(source)
+                    pcm = audio.get_raw_data(convert_rate=16000, convert_width=2)
+                    samplerate = 16000
+                    audio_int16 = np.frombuffer(pcm, dtype=np.int16)
+                except Exception as e:
+                    print(f"Standard AudioFile failed: {e}. Trying raw PCM conversion.")
+                    # Check if raw_bytes has a reasonable size for audio
+                    if len(raw_bytes) < 100:
+                        return jsonify({"error": "Audio data too small to process"}), 400
+                        
+                    # If it's a 500 error, the frontend might be sending raw Float32/Int16 PCM
+                    # from the ScriptProcessorNode. Assume 16kHz.
+                    try:
+                        # Try Int16 first
+                        audio_int16 = np.frombuffer(raw_bytes, dtype=np.int16)
+                        samplerate = 16000 
+                    except:
+                        try:
+                            # Try Float32
+                            audio_float32 = np.frombuffer(raw_bytes, dtype=np.float32)
+                            audio_int16 = (audio_float32 * 32767).astype(np.int16)
+                            samplerate = 16000
+                        except:
+                            raise e
             except Exception as e:
-                raise RuntimeError(f"Format not recognised by available decoders: {e}")
+                print(f"AudioFile fallback error: {e}")
+                return jsonify({"error": f"Format not recognised by available decoders: {e}"}), 400
         else:
             # Convert to mono if stereo
             if len(audio_data.shape) > 1:
                 audio_data = audio_data.mean(axis=1)
-            # Convert float PCM to int16
-            audio_int16 = (audio_data * 32767).astype(np.int16)
+            # Convert float PCM to int16 if needed
+            if audio_data.dtype != np.int16:
+                audio_int16 = (audio_data * 32767).astype(np.int16)
+            else:
+                audio_int16 = audio_data
 
         # Prefer Whisper for better accuracy
         if FASTER_WHISPER_AVAILABLE and whisper_model:
             import tempfile
-            with tempfile.NamedTemporaryFile(suffix=".wav", delete=True) as tmp:
-                sf.write(tmp.name, audio_int16.astype(np.float32) / 32768.0, samplerate)
-                segments, _info = whisper_model.transcribe(tmp.name, language="en")
+            tmp_path = None
+            try:
+                with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+                    sf.write(tmp.name, audio_int16.astype(np.float32) / 32768.0, samplerate)
+                    tmp_path = tmp.name
+                
+                segments, _info = whisper_model.transcribe(tmp_path, language="en")
                 text = "".join(seg.text for seg in segments).strip()
                 return jsonify({"text": text}), 200
+            except Exception as e:
+                print(f"Whisper transcription error: {e}")
+                # Fallback to Vosk if whisper fails
+            finally:
+                if tmp_path and os.path.exists(tmp_path):
+                    try:
+                        os.remove(tmp_path)
+                    except:
+                        pass
 
-        rec = KaldiRecognizer(vosk_model, samplerate)
-        rec.SetWords(True)
-        rec.AcceptWaveform(audio_int16.tobytes())
+        if VOSK_AVAILABLE and vosk_model:
+            try:
+                rec = KaldiRecognizer(vosk_model, samplerate)
+                rec.SetWords(True)
+                rec.AcceptWaveform(audio_int16.tobytes())
+                res = json.loads(rec.FinalResult())
+                return jsonify({"text": res.get("text", "").strip()}), 200
+            except Exception as e:
+                print(f"Vosk transcription error: {e}")
+        
+        # 3) Last resort: Try basic SpeechRecognition Google Web Speech API (if internet available)
+        try:
+            print("Trying Google Web Speech API as last resort...")
+            r = sr.Recognizer()
+            # Convert raw bytes back to AudioData for the recognizer
+            audio_data_obj = sr.AudioData(audio_int16.tobytes(), 16000, 2)
+            text = r.recognize_google(audio_data_obj)
+            return jsonify({"text": text}), 200
+        except Exception as google_e:
+            print(f"Google Web Speech API failed: {google_e}")
 
-        res = json.loads(rec.FinalResult())
-        return jsonify({"text": res.get("text", "").strip()}), 200
+        return jsonify({"error": "No STT model or service could process the request. Models may be missing or audio format is invalid."}), 500
+
+    except Exception as e:
+        import traceback
+        print(f"STT Exception: {e}")
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
     except Exception as e:
         print(f"Transcription error: {e}")
         return jsonify({"error": str(e)}), 500
@@ -998,4 +1072,6 @@ def iot_command():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=8080)
+    port = int(os.getenv('PORT', '8080'))
+    debug = os.getenv('FLASK_DEBUG', '').strip().lower() in {'1', 'true', 'yes', 'on'}
+    app.run(debug=debug, host='0.0.0.0', port=port)

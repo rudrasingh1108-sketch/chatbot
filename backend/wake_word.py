@@ -20,11 +20,19 @@ class WakeWordDetector:
 
     def _init_model(self):
         try:
-            # Initialize openwakeword model with 'alexa' or 'hey_jarvis' if available
-            # For now, using 'alexa' as it's a standard pre-trained model in openwakeword
-            # We can also point to custom .onnx files if needed
-            self.model = Model(wakeword_models=["alexa"], inference_framework="onnx")
-            return True
+            # Try to initialize with default models, but catch the specific ONNX error
+            try:
+                self.model = Model(wakeword_models=["alexa"], inference_framework="onnx")
+                return True
+            except Exception as e:
+                print(f"Failed to load 'alexa' model: {e}")
+                # Try initializing without specifying models (will try to load defaults)
+                try:
+                    self.model = Model(inference_framework="onnx")
+                    return True
+                except Exception as e2:
+                    print(f"Failed to initialize Model at all: {e2}")
+                    return False
         except Exception as e:
             print(f"Error initializing OpenWakeWord: {e}")
             return False
