@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Assistant - Chat Interface</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1>🤖 Voice Assistant</h1>
+            </div>
+
+            <!-- User Profile Section -->
+            <div class="user-section">
+                <h3>User Profile</h3>
+                <div id="current-user" class="current-user">
+                    <p>Not logged in</p>
+                </div>
+                <div id="user-list" class="user-list">
+                    <label for="user-select">Select User:</label>
+                    <select id="user-select">
+                        <option value="">-- Choose User --</option>
+                    </select>
+                    <button id="set-user-btn" class="btn-small">Set User</button>
+                </div>
+                <button id="logout-btn" class="btn-small" style="display:none;">Logout</button>
+            </div>
+
+            <!-- Voice Profiles -->
+            <div class="profiles-section">
+                <h3>Voice Profiles</h3>
+                <div id="profiles-list" class="profiles-list"></div>
+                <button id="create-profile-btn" class="btn-small">+ New Profile</button>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <h3>Quick Actions</h3>
+                <button class="quick-action" data-action="weather">🌤️ Weather</button>
+                <button class="quick-action" data-action="joke">😂 Joke</button>
+                <button class="quick-action" data-action="news">📰 News</button>
+                <button class="quick-action" data-action="definition">📚 Definition</button>
+                <button class="quick-action" data-action="time">⏰ Time</button>
+            </div>
+
+            <!-- Settings -->
+            <div class="settings-section">
+                <h3>Settings</h3>
+                <button id="clear-history-btn" class="btn-small">Clear History</button>
+            </div>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="chat-header">
+                <h2 id="page-title">Chat with Voice Assistant</h2>
+                <div class="header-info">
+                    <span id="status-indicator" class="status online">● Online</span>
+                </div>
+            </header>
+
+            <!-- Chat Messages -->
+            <div id="chat-container" class="chat-container">
+                <div class="welcome-message">
+                    <h2>Welcome to Voice Assistant</h2>
+                    <p>Chat with your personal AI assistant. Type or speak to get started!</p>
+                    <div class="features">
+                        <div class="feature">
+                            <h4>💬 Chat</h4>
+                            <p>Have conversations with your assistant</p>
+                        </div>
+                        <div class="feature">
+                            <h4>🎤 Voice Recognition</h4>
+                            <p>Multi-user voice profile support</p>
+                        </div>
+                        <div class="feature">
+                            <h4>📲 Smart Commands</h4>
+                            <p>Open apps, search web, get weather & more</p>
+                        </div>
+                    </div>
+                </div>
+                <div id="messages" class="messages"></div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="input-area">
+                <input 
+                    type="text" 
+                    id="message-input" 
+                    placeholder="Type your message here..." 
+                    autocomplete="off"
+                >
+                <button id="send-btn" class="btn-send">Send</button>
+                <button id="voice-btn" class="btn-voice" title="Click to use voice input">🎤</button>
+            </div>
+            
+            <!-- Voice Feedback -->
+            <div class="voice-feedback">
+                <div id="voice-indicator" class="voice-indicator">🎤 Tap to speak</div>
+                <div id="voice-transcript" class="voice-transcript"></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal for Creating Profile -->
+    <div id="profile-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="close" id="close-modal">&times;</span>
+            <h2>Create New Voice Profile</h2>
+            <input type="text" id="profile-username" placeholder="Enter username">
+            <button id="create-profile-confirm-btn" class="btn">Create Profile</button>
+            <p id="profile-status" class="status-message"></p>
+        </div>
+    </div>
+
+    <!-- Modal for Weather -->
+    <div id="weather-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="close" id="close-weather">&times;</span>
+            <h2>Weather</h2>
+            <input type="text" id="weather-city" placeholder="Enter city name" value="London">
+            <button id="get-weather-btn" class="btn">Get Weather</button>
+            <p id="weather-result" class="modal-result"></p>
+        </div>
+    </div>
+
+    <!-- Modal for Definition -->
+    <div id="definition-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="close" id="close-definition">&times;</span>
+            <h2>Word Definition</h2>
+            <input type="text" id="definition-word" placeholder="Enter word">
+            <button id="get-definition-btn" class="btn">Define</button>
+            <p id="definition-result" class="modal-result"></p>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

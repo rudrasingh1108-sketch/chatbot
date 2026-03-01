@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JARVIS - Voice Assistant</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #0f172a;
+            color: #f8fafc;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .loading-container {
+            text-align: center;
+        }
+        .pulse {
+            width: 80px;
+            height: 80px;
+            background: rgba(56, 189, 248, 0.2);
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #38bdf8;
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+            animation: pulse-animation 2s infinite;
+        }
+        @keyframes pulse-animation {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 15px rgba(56, 189, 248, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); }
+        }
+        h1 { font-size: 1.5rem; letter-spacing: 0.1em; font-weight: 300; margin: 0; }
+        p { color: #94a3b8; font-size: 0.9rem; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="loading-container">
+        <div class="pulse">J</div>
+        <h1>INITIALIZING JARVIS</h1>
+        <p>Redirecting to secure terminal...</p>
+    </div>
+    <script>
+        setTimeout(() => {
+            window.location.href = 'chat.html?notify=login';
+        }, 1500);
+    </script>
+</body>
+</html>
