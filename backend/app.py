@@ -15,7 +15,15 @@ import re
 from datetime import datetime
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+# Add the project root to sys.path
+_PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if _PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT)
+# Also add the backend directory itself
+_BACKEND_DIR = os.path.abspath(os.path.dirname(__file__))
+if _BACKEND_DIR not in sys.path:
+    sys.path.insert(0, _BACKEND_DIR)
+
 from typing import Dict, Any
 from dotenv import load_dotenv
 try:
@@ -48,7 +56,7 @@ from whatsapp_sim import WhatsAppSimulator
 app = Flask(__name__, 
             template_folder=os.path.abspath(os.path.join(os.path.dirname(__file__), '../frontend/templates')), 
             static_folder=os.path.abspath(os.path.join(os.path.dirname(__file__), '../frontend/static')))
-CORS(app, resources={r"/api/*": {"origins": "*", "methods": ["GET", "POST", "OPTIONS", "PATCH", "DELETE"], "allow_headers": ["Content-Type", "Authorization"]}}})
+CORS(app, resources={r"/api/*": {"origins": "*", "methods": ["GET", "POST", "OPTIONS", "PATCH", "DELETE"], "allow_headers": ["Content-Type", "Authorization"]}})
 
 # Initialize Brain
 jarvis_brain = JarvisBrain()
