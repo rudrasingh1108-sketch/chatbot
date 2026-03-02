@@ -1,14 +1,13 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify
 from flask_cors import CORS
 import os
 
 app = Flask(__name__)
-# Enable CORS for all origins and all /api/ routes
-CORS(app, resources={r"/api/*": {"origins": "*"}})
+CORS(app)
 
 @app.route('/api/health', methods=['GET'])
 def health():
-    return jsonify({"status": "healthy", "message": "Backend is reachable"})
+    return jsonify({"status": "healthy", "message": "Barebones system is live"})
 
 @app.route('/api/wake-status', methods=['GET'])
 def wake_status():
