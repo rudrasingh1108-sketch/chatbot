@@ -48,7 +48,7 @@ from whatsapp_sim import WhatsAppSimulator
 app = Flask(__name__, 
             template_folder=os.path.abspath(os.path.join(os.path.dirname(__file__), '../frontend/templates')), 
             static_folder=os.path.abspath(os.path.join(os.path.dirname(__file__), '../frontend/static')))
-CORS(app, resources={r"/api/*": {"origins": ["https://deployfrontend-blue.vercel.app", "http://localhost:8080", "http://127.0.0.1:8080"]}})
+CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 # Initialize Brain
 jarvis_brain = JarvisBrain()
