@@ -48,7 +48,7 @@ from whatsapp_sim import WhatsAppSimulator
 app = Flask(__name__, 
             template_folder=os.path.abspath(os.path.join(os.path.dirname(__file__), '../frontend/templates')), 
             static_folder=os.path.abspath(os.path.join(os.path.dirname(__file__), '../frontend/static')))
-CORS(app, resources={r"/api/*": {"origins": "*"}})
+CORS(app, resources={r"/api/*": {"origins": "*", "methods": ["GET", "POST", "OPTIONS", "PATCH", "DELETE"], "allow_headers": ["Content-Type", "Authorization"]}}})
 
 # Initialize Brain
 jarvis_brain = JarvisBrain()
